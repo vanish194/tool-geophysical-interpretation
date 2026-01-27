@@ -39,6 +39,10 @@ qt_add_executable(GeoMagnSurvey
     core/models/magneticMeasurementModel.cpp
     core/models/referenceReliefModel.h
     core/models/referenceReliefModel.cpp
+    core/spatial/abstractSpatialDataAdapter.h
+    core/spatial/spatialPoint.h
+    core/spatial/magneticSpatialDataAdapter.h core/spatial/magneticSpatialDataAdapter.cpp
+    core/spatial/GPSSpatialDataAdapter.h core/spatial/GPSSpatialDataAdapter.cpp
 )
 
 qt_add_translations(
