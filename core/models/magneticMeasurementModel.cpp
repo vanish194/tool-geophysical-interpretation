@@ -92,7 +92,8 @@ bool MagneticMeasurementModel::setData(const QModelIndex& index, const QVariant&
         index.row() >= rowCount() || index.column() >= columnCount())
         return false;
 
-    auto measurement = storage_->magneticAt(index.row());
+    auto oldMeasurement = storage_->magneticAt(index.row());
+    auto measurement = oldMeasurement;
     bool success = false;
 
     switch (index.column()) {
@@ -103,9 +104,6 @@ bool MagneticMeasurementModel::setData(const QModelIndex& index, const QVariant&
             success = point.setProfile(profile);
             if (success) {
                 measurement.setPoint(point);
-                storage_->blockSignals(true);
-                success = storage_->updateMagnetic(index.row(), measurement);
-                storage_->blockSignals(false);
             }
         }
         break;
@@ -117,9 +115,6 @@ bool MagneticMeasurementModel::setData(const QModelIndex& index, const QVariant&
             success = point.setPicket(picket);
             if (success) {
                 measurement.setPoint(point);
-                storage_->blockSignals(true);
-                success = storage_->updateMagnetic(index.row(), measurement);
-                storage_->blockSignals(false);
             }
         }
         break;
@@ -128,34 +123,27 @@ bool MagneticMeasurementModel::setData(const QModelIndex& index, const QVariant&
         double val = value.toDouble(&success);
         if (success) {
             measurement.setValue(val);
-            storage_->blockSignals(true);
-            success = storage_->updateMagnetic(index.row(), measurement);
-            storage_->blockSignals(false);
         }
         break;
     }
     case ColSource: {
         auto source = stringToSource(value.toString());
         measurement.setSource(source);
-        storage_->blockSignals(true);
-        success = storage_->updateMagnetic(index.row(), measurement);
-        storage_->blockSignals(false);
+        success = true;
         break;
     }
     case ColTimestamp: {
         QDateTime timestamp = QDateTime::fromString(value.toString(), "yyyy-MM-dd HH:mm:ss");
         if (timestamp.isValid()) {
             measurement.setTimestamp(timestamp);
-            storage_->blockSignals(true);
-            success = storage_->updateMagnetic(index.row(), measurement);
-            storage_->blockSignals(false);
+            success = true;
         }
         break;
     }
     }
 
     if (success) {
-        emit dataChanged(index, index, {role});
+        emit measurementUpdated(index.row(), oldMeasurement, measurement);
         return true;
     }
 

@@ -37,6 +37,9 @@ public:
         ColumnCount
     };
 
+signals:
+    void measurementUpdated(int row, const MagneticMeasurement& oldMeasurement, const MagneticMeasurement& newMeasurement);
+
 private slots:
     void onDataChanged();
 

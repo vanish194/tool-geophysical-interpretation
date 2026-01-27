@@ -98,3 +98,51 @@ void RemoveReliefCommand::undo()
 {
     storage_->addRelief(removedPoint_);
 }
+
+// UpdateGPSCommand
+UpdateGPSCommand::UpdateGPSCommand(DataStorage* storage, int index, const GPSMeasurement& oldMeasurement, const GPSMeasurement& newMeasurement, QUndoCommand* parent)
+    : QUndoCommand("Update GPS Measurement", parent), storage_(storage), index_(index), oldMeasurement_(oldMeasurement), newMeasurement_(newMeasurement)
+{
+}
+
+void UpdateGPSCommand::redo()
+{
+    storage_->updateGPS(index_, newMeasurement_);
+}
+
+void UpdateGPSCommand::undo()
+{
+    storage_->updateGPS(index_, oldMeasurement_);
+}
+
+// UpdateMagneticCommand
+UpdateMagneticCommand::UpdateMagneticCommand(DataStorage* storage, int index, const MagneticMeasurement& oldMeasurement, const MagneticMeasurement& newMeasurement, QUndoCommand* parent)
+    : QUndoCommand("Update Magnetic Measurement", parent), storage_(storage), index_(index), oldMeasurement_(oldMeasurement), newMeasurement_(newMeasurement)
+{
+}
+
+void UpdateMagneticCommand::redo()
+{
+    storage_->updateMagnetic(index_, newMeasurement_);
+}
+
+void UpdateMagneticCommand::undo()
+{
+    storage_->updateMagnetic(index_, oldMeasurement_);
+}
+
+// UpdateReliefCommand
+UpdateReliefCommand::UpdateReliefCommand(DataStorage* storage, int index, const ReferenceReliefPoint& oldPoint, const ReferenceReliefPoint& newPoint, QUndoCommand* parent)
+    : QUndoCommand("Update Relief Point", parent), storage_(storage), index_(index), oldPoint_(oldPoint), newPoint_(newPoint)
+{
+}
+
+void UpdateReliefCommand::redo()
+{
+    storage_->updateRelief(index_, newPoint_);
+}
+
+void UpdateReliefCommand::undo()
+{
+    storage_->updateRelief(index_, oldPoint_);
+}

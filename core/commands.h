@@ -92,3 +92,51 @@ private:
     int index_;
     ReferenceReliefPoint removedPoint_;
 };
+
+// Update GPS Command
+class UpdateGPSCommand : public QUndoCommand
+{
+public:
+    UpdateGPSCommand(DataStorage* storage, int index, const GPSMeasurement& oldMeasurement, const GPSMeasurement& newMeasurement, QUndoCommand* parent = nullptr);
+
+    void redo() override;
+    void undo() override;
+
+private:
+    DataStorage* storage_;
+    int index_;
+    GPSMeasurement oldMeasurement_;
+    GPSMeasurement newMeasurement_;
+};
+
+// Update Magnetic Command
+class UpdateMagneticCommand : public QUndoCommand
+{
+public:
+    UpdateMagneticCommand(DataStorage* storage, int index, const MagneticMeasurement& oldMeasurement, const MagneticMeasurement& newMeasurement, QUndoCommand* parent = nullptr);
+
+    void redo() override;
+    void undo() override;
+
+private:
+    DataStorage* storage_;
+    int index_;
+    MagneticMeasurement oldMeasurement_;
+    MagneticMeasurement newMeasurement_;
+};
+
+// Update Relief Command
+class UpdateReliefCommand : public QUndoCommand
+{
+public:
+    UpdateReliefCommand(DataStorage* storage, int index, const ReferenceReliefPoint& oldPoint, const ReferenceReliefPoint& newPoint, QUndoCommand* parent = nullptr);
+
+    void redo() override;
+    void undo() override;
+
+private:
+    DataStorage* storage_;
+    int index_;
+    ReferenceReliefPoint oldPoint_;
+    ReferenceReliefPoint newPoint_;
+};

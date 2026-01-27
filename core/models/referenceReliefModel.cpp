@@ -86,7 +86,8 @@ bool ReferenceReliefModel::setData(const QModelIndex& index, const QVariant& val
         index.row() >= rowCount() || index.column() >= columnCount())
         return false;
 
-    auto point = storage_->reliefAt(index.row());
+    auto oldPoint = storage_->reliefAt(index.row());
+    auto point = oldPoint;
     bool success = false;
 
     switch (index.column()) {
@@ -97,9 +98,6 @@ bool ReferenceReliefModel::setData(const QModelIndex& index, const QVariant& val
             success = coord.setLatitude(latitude);
             if (success) {
                 point.setCoordinate(coord);
-                storage_->blockSignals(true);
-                success = storage_->updateRelief(index.row(), point);
-                storage_->blockSignals(false);
             }
         }
         break;
@@ -111,9 +109,6 @@ bool ReferenceReliefModel::setData(const QModelIndex& index, const QVariant& val
             success = coord.setLongitude(longitude);
             if (success) {
                 point.setCoordinate(coord);
-                storage_->blockSignals(true);
-                success = storage_->updateRelief(index.row(), point);
-                storage_->blockSignals(false);
             }
         }
         break;
@@ -122,24 +117,19 @@ bool ReferenceReliefModel::setData(const QModelIndex& index, const QVariant& val
         double elevation = value.toDouble(&success);
         if (success) {
             point.setElevation(elevation);
-            storage_->blockSignals(true);
-            success = storage_->updateRelief(index.row(), point);
-            storage_->blockSignals(false);
         }
         break;
     }
     case ColSource: {
         auto source = stringToSource(value.toString());
         point.setSource(source);
-        storage_->blockSignals(true);
-        success = storage_->updateRelief(index.row(), point);
-        storage_->blockSignals(false);
+        success = true;
         break;
     }
     }
 
     if (success) {
-        emit dataChanged(index, index, {role});
+        emit measurementUpdated(index.row(), oldPoint, point);
         return true;
     }
 

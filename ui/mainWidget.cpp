@@ -9,7 +9,12 @@ MainWidget::MainWidget(QWidget* parent)
     , magneticModel_(new MagneticMeasurementModel(storage_, this))
     , reliefModel_(new ReferenceReliefModel(storage_, this))
 {
+    connect(gpsModel_, &GPSMeasurementModel::measurementUpdated, this, &MainWidget::onGPSDataChanged);
+    connect(magneticModel_, &MagneticMeasurementModel::measurementUpdated, this, &MainWidget::onMagneticDataChanged);
+    connect(reliefModel_, &ReferenceReliefModel::measurementUpdated, this, &MainWidget::onReliefDataChanged);
     setupUI();
+
+    undoStack_->setUndoLimit(1000);
 
     // Пример добавления тестовых данных
     GPSMeasurement gps1(
@@ -202,4 +207,19 @@ void MainWidget::onRemoveRelief()
 
     int row = selected.first().row();
     undoStack_->push(new RemoveReliefCommand(storage_, row));
+}
+
+void MainWidget::onGPSDataChanged(int row, const GPSMeasurement& oldMeasurement, const GPSMeasurement& newMeasurement)
+{
+    undoStack_->push(new UpdateGPSCommand(storage_, row, oldMeasurement, newMeasurement));
+}
+
+void MainWidget::onMagneticDataChanged(int row, const MagneticMeasurement& oldMeasurement, const MagneticMeasurement& newMeasurement)
+{
+    undoStack_->push(new UpdateMagneticCommand(storage_, row, oldMeasurement, newMeasurement));
+}
+
+void MainWidget::onReliefDataChanged(int row, const ReferenceReliefPoint& oldPoint, const ReferenceReliefPoint& newPoint)
+{
+    undoStack_->push(new UpdateReliefCommand(storage_, row, oldPoint, newPoint));
 }

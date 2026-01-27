@@ -30,6 +30,9 @@ private slots:
     void onRemoveMagnetic();
     void onAddRelief();
     void onRemoveRelief();
+    void onGPSDataChanged(int row, const GPSMeasurement& oldMeasurement, const GPSMeasurement& newMeasurement);
+    void onMagneticDataChanged(int row, const MagneticMeasurement& oldMeasurement, const MagneticMeasurement& newMeasurement);
+    void onReliefDataChanged(int row, const ReferenceReliefPoint& oldPoint, const ReferenceReliefPoint& newPoint);
 
 private:
     DataStorage* storage_;

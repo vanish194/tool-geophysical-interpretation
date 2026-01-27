@@ -39,6 +39,9 @@ public:
         ColumnCount
     };
 
+signals:
+    void measurementUpdated(int row, const GPSMeasurement& oldMeasurement, const GPSMeasurement& newMeasurement);
+
 private slots:
     void onDataChanged();
 

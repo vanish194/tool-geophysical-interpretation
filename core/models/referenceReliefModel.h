@@ -36,6 +36,9 @@ public:
         ColumnCount
     };
 
+signals:
+    void measurementUpdated(int row, const ReferenceReliefPoint& oldPoint, const ReferenceReliefPoint& newPoint);
+
 private slots:
     void onDataChanged();
 
