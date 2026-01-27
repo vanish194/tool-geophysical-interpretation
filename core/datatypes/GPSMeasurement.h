@@ -16,6 +16,8 @@ public:
         Manual
     };
 
+    GPSMeasurement() = default;
+
     GPSMeasurement(const MeasurementPoint& point,
                    const GeoCoordinate& coordinate,
                    const QDateTime& timestamp,

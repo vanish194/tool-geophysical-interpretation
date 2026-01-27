@@ -12,6 +12,10 @@ qt_add_executable(GeoMagnSurvey
     # ---- entry point ----
     main.cpp
 
+    # ---- Commands ----
+    core/commands.h
+    core/commands.cpp
+
     # ---- UI ----
     ui/mainWidget.h
     ui/mainWidget.cpp

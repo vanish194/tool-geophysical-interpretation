@@ -16,6 +16,8 @@ public:
         Manual
     };
 
+    MagneticMeasurement() = default;
+
     MagneticMeasurement(double value, const QDateTime& timestamp)
         : value_(value)
         , source_(Source::Field_Sensor)

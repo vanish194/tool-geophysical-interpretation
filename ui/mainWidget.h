@@ -7,11 +7,13 @@
 #include <QPushButton>
 #include <QMessageBox>
 #include <QGroupBox>
+#include <QUndoStack>
 
 #include "core/models/GPSMeasurementModel.h"
 #include "core/models/magneticMeasurementModel.h"
 #include "core/models/referenceReliefModel.h"
 #include "core/storage/dataStorage.h"
+#include "core/commands.h"
 
 class MainWidget : public QWidget
 {
@@ -31,6 +33,7 @@ private slots:
 
 private:
     DataStorage* storage_;
+    QUndoStack* undoStack_;
 
     GPSMeasurementModel* gpsModel_;
     MagneticMeasurementModel* magneticModel_;

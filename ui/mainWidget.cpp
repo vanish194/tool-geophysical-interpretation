@@ -4,6 +4,7 @@
 MainWidget::MainWidget(QWidget* parent)
     : QWidget(parent)
     , storage_(new DataStorage(this))
+    , undoStack_(new QUndoStack(this))
     , gpsModel_(new GPSMeasurementModel(storage_, this))
     , magneticModel_(new MagneticMeasurementModel(storage_, this))
     , reliefModel_(new ReferenceReliefModel(storage_, this))
@@ -42,6 +43,18 @@ MainWidget::~MainWidget()
 void MainWidget::setupUI()
 {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
+
+    // Undo/Redo buttons
+    QHBoxLayout* undoRedoLayout = new QHBoxLayout();
+    QPushButton* undoButton = new QPushButton(tr("Undo"), this);
+    QPushButton* redoButton = new QPushButton(tr("Redo"), this);
+    connect(undoButton, &QPushButton::clicked, undoStack_, &QUndoStack::undo);
+    connect(redoButton, &QPushButton::clicked, undoStack_, &QUndoStack::redo);
+    undoRedoLayout->addWidget(undoButton);
+    undoRedoLayout->addWidget(redoButton);
+    undoRedoLayout->addStretch();
+
+    mainLayout->addLayout(undoRedoLayout);
 
     // GPS Table
     QGroupBox* gpsGroup = new QGroupBox(tr("GPS Measurements"), this);
@@ -131,7 +144,7 @@ void MainWidget::onAddGPS()
         QDateTime::currentDateTime(),
         GPSMeasurement::Source::Manual
         );
-    gpsModel_->addMeasurement(gps);
+    undoStack_->push(new AddGPSCommand(storage_, gps));
 }
 
 void MainWidget::onRemoveGPS()
@@ -143,9 +156,7 @@ void MainWidget::onRemoveGPS()
     }
 
     int row = selected.first().row();
-    if (gpsModel_->removeMeasurement(row)) {
-        QMessageBox::information(this, tr("Success"), tr("GPS measurement removed"));
-    }
+    undoStack_->push(new RemoveGPSCommand(storage_, row));
 }
 
 void MainWidget::onAddMagnetic()
@@ -156,7 +167,7 @@ void MainWidget::onAddMagnetic()
         MagneticMeasurement::Source::Manual,
         QDateTime::currentDateTime()
         );
-    magneticModel_->addMeasurement(magnetic);
+    undoStack_->push(new AddMagneticCommand(storage_, magnetic));
 }
 
 void MainWidget::onRemoveMagnetic()
@@ -168,9 +179,7 @@ void MainWidget::onRemoveMagnetic()
     }
 
     int row = selected.first().row();
-    if (magneticModel_->removeMeasurement(row)) {
-        QMessageBox::information(this, tr("Success"), tr("Magnetic measurement removed"));
-    }
+    undoStack_->push(new RemoveMagneticCommand(storage_, row));
 }
 
 void MainWidget::onAddRelief()
@@ -180,7 +189,7 @@ void MainWidget::onAddRelief()
         0.0,
         ReferenceReliefPoint::Source::Survey
         );
-    reliefModel_->addPoint(relief);
+    undoStack_->push(new AddReliefCommand(storage_, relief));
 }
 
 void MainWidget::onRemoveRelief()
@@ -192,7 +201,5 @@ void MainWidget::onRemoveRelief()
     }
 
     int row = selected.first().row();
-    if (reliefModel_->removePoint(row)) {
-        QMessageBox::information(this, tr("Success"), tr("Relief point removed"));
-    }
+    undoStack_->push(new RemoveReliefCommand(storage_, row));
 }

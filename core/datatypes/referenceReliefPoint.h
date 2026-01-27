@@ -13,6 +13,8 @@ public:
         Survey
     };
 
+    ReferenceReliefPoint() = default;
+
     ReferenceReliefPoint(const GeoCoordinate& coordinate,
                          double elevation,
                          Source source = Source::Survey)
