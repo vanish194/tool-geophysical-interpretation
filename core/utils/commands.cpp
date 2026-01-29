@@ -1,4 +1,4 @@
-#include "commands.h"
+#include "core/utils/commands.h"
 
 // AddGPSCommand
 AddGPSCommand::AddGPSCommand(DataStorage* storage, const GPSMeasurement& measurement, QUndoCommand* parent)

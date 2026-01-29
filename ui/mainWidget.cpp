@@ -1,6 +1,10 @@
 #include "mainWidget.h"
 #include <QHeaderView>
 
+#include <QtMath>//for addTestData()
+#include <vector>
+
+
 MainWidget::MainWidget(QWidget* parent)
     : QWidget(parent)
     , storage_(new DataStorage(this))
@@ -9,6 +13,18 @@ MainWidget::MainWidget(QWidget* parent)
     , magneticModel_(new MagneticMeasurementModel(storage_, this))
     , reliefModel_(new ReferenceReliefModel(storage_, this))
 {
+    gpsSpatialAdapter_ =
+        new GPSSpatialDataAdapter(gpsModel_, this);
+
+    magneticSpatialAdapter_ =
+        new MagneticSpatialDataAdapter(magneticModel_, this);
+
+    gpsHeatMap_ =
+        new GPSHeatMapWidget(gpsSpatialAdapter_, this);
+
+    magneticHeatMap_ =
+        new MagneticHeatMapWidget(magneticSpatialAdapter_, this);
+
     connect(gpsModel_, &GPSMeasurementModel::measurementUpdated, this, &MainWidget::onGPSDataChanged);
     connect(magneticModel_, &MagneticMeasurementModel::measurementUpdated, this, &MainWidget::onMagneticDataChanged);
     connect(reliefModel_, &ReferenceReliefModel::measurementUpdated, this, &MainWidget::onReliefDataChanged);
@@ -16,29 +32,7 @@ MainWidget::MainWidget(QWidget* parent)
 
     undoStack_->setUndoLimit(1000);
 
-    // Пример добавления тестовых данных
-    GPSMeasurement gps1(
-        MeasurementPoint(1, 100),
-        GeoCoordinate(55.7558, 37.6176, 156.0),
-        QDateTime::currentDateTime(),
-        GPSMeasurement::Source::GPS_Receiver
-        );
-    gpsModel_->addMeasurement(gps1);
-
-    MagneticMeasurement magnetic1(
-        MeasurementPoint(1, 100),
-        25.5,
-        MagneticMeasurement::Source::Field_Sensor,
-        QDateTime::currentDateTime()
-        );
-    magneticModel_->addMeasurement(magnetic1);
-
-    ReferenceReliefPoint relief1(
-        GeoCoordinate(55.7558, 37.6176, 156.0),
-        150.0,
-        ReferenceReliefPoint::Source::Survey
-        );
-    reliefModel_->addPoint(relief1);
+    addTestData();
 }
 
 MainWidget::~MainWidget()
@@ -63,18 +57,21 @@ void MainWidget::setupUI()
 
     // GPS Table
     QGroupBox* gpsGroup = new QGroupBox(tr("GPS Measurements"), this);
-    QVBoxLayout* gpsLayout = new QVBoxLayout(gpsGroup);
+    QHBoxLayout* gpsGroupLayout = new QHBoxLayout(gpsGroup);
+
+    // --- левая часть: таблица ---
+    QVBoxLayout* gpsLeftLayout = new QVBoxLayout();
 
     gpsTableView_ = new QTableView(this);
     gpsTableView_->setModel(gpsModel_);
     gpsTableView_->setSelectionBehavior(QAbstractItemView::SelectRows);
     gpsTableView_->setSelectionMode(QAbstractItemView::SingleSelection);
     gpsTableView_->horizontalHeader()->setStretchLastSection(true);
-    gpsTableView_->verticalHeader()->setVisible(true);
 
     QHBoxLayout* gpsButtonLayout = new QHBoxLayout();
     QPushButton* addGPSButton = new QPushButton(tr("Add GPS"), this);
     QPushButton* removeGPSButton = new QPushButton(tr("Remove GPS"), this);
+
     connect(addGPSButton, &QPushButton::clicked, this, &MainWidget::onAddGPS);
     connect(removeGPSButton, &QPushButton::clicked, this, &MainWidget::onRemoveGPS);
 
@@ -82,12 +79,21 @@ void MainWidget::setupUI()
     gpsButtonLayout->addWidget(removeGPSButton);
     gpsButtonLayout->addStretch();
 
-    gpsLayout->addWidget(gpsTableView_);
-    gpsLayout->addLayout(gpsButtonLayout);
+    gpsLeftLayout->addWidget(gpsTableView_);
+    gpsLeftLayout->addLayout(gpsButtonLayout);
+
+    // --- правая часть: карта ---
+    gpsHeatMap_->setMinimumWidth(300);
+
+    gpsGroupLayout->addLayout(gpsLeftLayout, 2);
+    gpsGroupLayout->addWidget(gpsHeatMap_, 1);
+
 
     // Magnetic Table
     QGroupBox* magneticGroup = new QGroupBox(tr("Magnetic Measurements"), this);
-    QVBoxLayout* magneticLayout = new QVBoxLayout(magneticGroup);
+    QHBoxLayout* magneticGroupLayout = new QHBoxLayout(magneticGroup);
+
+    QVBoxLayout* magneticLeftLayout = new QVBoxLayout();
 
     magneticTableView_ = new QTableView(this);
     magneticTableView_->setModel(magneticModel_);
@@ -98,6 +104,7 @@ void MainWidget::setupUI()
     QHBoxLayout* magneticButtonLayout = new QHBoxLayout();
     QPushButton* addMagneticButton = new QPushButton(tr("Add Magnetic"), this);
     QPushButton* removeMagneticButton = new QPushButton(tr("Remove Magnetic"), this);
+
     connect(addMagneticButton, &QPushButton::clicked, this, &MainWidget::onAddMagnetic);
     connect(removeMagneticButton, &QPushButton::clicked, this, &MainWidget::onRemoveMagnetic);
 
@@ -105,8 +112,14 @@ void MainWidget::setupUI()
     magneticButtonLayout->addWidget(removeMagneticButton);
     magneticButtonLayout->addStretch();
 
-    magneticLayout->addWidget(magneticTableView_);
-    magneticLayout->addLayout(magneticButtonLayout);
+    magneticLeftLayout->addWidget(magneticTableView_);
+    magneticLeftLayout->addLayout(magneticButtonLayout);
+
+    magneticHeatMap_->setMinimumWidth(300);
+
+    magneticGroupLayout->addLayout(magneticLeftLayout, 2);
+    magneticGroupLayout->addWidget(magneticHeatMap_, 1);
+
 
     // Relief Table
     QGroupBox* reliefGroup = new QGroupBox(tr("Reference Relief Points"), this);
@@ -139,6 +152,121 @@ void MainWidget::setupUI()
     setLayout(mainLayout);
     resize(800, 600);
 }
+
+void MainWidget::addTestData()
+{
+    const int profilesCount = 200;
+    const int picketsPerProfile = 200;
+
+    const double step = 0.0002;
+
+    const double baseLat = 55.0;
+    const double baseLon = 37.0;
+    const double baseAlt = 120.0;
+
+    const QDateTime baseTime = QDateTime::currentDateTime();
+
+    // центры аномалий (профиль, пикет)
+    const QVector<QPointF> anomalies = {
+        {100, 100},   // центр
+        {40, 60},     // левая верхняя
+        {160, 140}    // правая нижняя
+    };
+
+    const double anomalyRadius = 25.0;
+
+    std::vector<GPSMeasurement> gpsVec;
+    std::vector<MagneticMeasurement> magneticVec;
+    std::vector<ReferenceReliefPoint> reliefVec;
+    gpsVec.reserve(profilesCount * picketsPerProfile);
+    magneticVec.reserve(profilesCount * picketsPerProfile);
+    reliefVec.reserve(profilesCount * picketsPerProfile);
+
+    for (int profile = 0; profile < profilesCount; ++profile) {
+        for (int picket = 0; picket < picketsPerProfile; ++picket) {
+
+            const double lat = baseLat + profile * step;
+            const double lon = baseLon + picket * step;
+
+            // ---------- разлом ----------
+            const double faultShift = (profile > 100) ? 20.0 : 0.0;
+
+            // ---------- аномалии ----------
+            double anomalyValue = 0.0;
+            for (const auto& c : anomalies) {
+                const double dx = picket - c.x();
+                const double dy = profile - c.y();
+                const double r2 = dx * dx + dy * dy;
+                anomalyValue += qExp(-r2 / (2.0 * anomalyRadius * anomalyRadius)) * 60.0;
+            }
+
+            // ---------- GPS ----------
+            GPSMeasurement gpsMeas(
+                MeasurementPoint(profile + 1, picket + 1),
+                GeoCoordinate(
+                    lat,
+                    lon,
+                    baseAlt
+                        + profile * 0.1
+                        + faultShift
+                    ),
+                baseTime.addSecs(profile * picketsPerProfile + picket),
+                GPSMeasurement::Source::GPS_Receiver
+                );
+            gpsVec.push_back(gpsMeas);
+
+            // ---------- Magnetic ----------
+            MagneticMeasurement magneticMeas(
+                MeasurementPoint(profile + 1, picket + 1),
+                40.0
+                    + picket * 0.15
+                    - profile * 0.1
+                    + qSin(picket * 0.1) * 8.0
+                    + faultShift * 1.5
+                    + anomalyValue,
+                MagneticMeasurement::Source::Field_Sensor,
+                baseTime.addSecs(profile * picketsPerProfile + picket)
+                );
+            magneticVec.push_back(magneticMeas);
+
+            // ---------- Relief ----------
+            const double reliefValue =
+                baseAlt
+                + profile * 0.2
+                + qSin(picket * 0.05) * 5.0
+                + faultShift;
+
+            ReferenceReliefPoint reliefMeas(
+                GeoCoordinate(lat, lon, reliefValue),
+                reliefValue,
+                ReferenceReliefPoint::Source::Survey
+                );
+            reliefVec.push_back(reliefMeas);
+        }
+    }
+
+    // Bulk-insert into storage to minimize signals and model resets
+    storage_->addGPSBatch(gpsVec);
+    storage_->addMagneticBatch(magneticVec);
+    storage_->addReliefBatch(reliefVec);
+}
+
+void MainWidget::blockAllModelsSignals()
+{
+    magneticModel_->blockSignals(true);
+    gpsModel_->blockSignals(true);
+    reliefModel_->blockSignals(true);
+
+}
+
+void MainWidget::unlockAllModelsSignals()
+{
+    magneticModel_->blockSignals(false);
+    gpsModel_->blockSignals(false);
+    reliefModel_->blockSignals(false);
+}
+
+
 
 void MainWidget::onAddGPS()
 {

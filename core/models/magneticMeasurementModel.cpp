@@ -1,5 +1,6 @@
 #include "core/models/magneticMeasurementModel.h"
 #include <QColor>
+#include <QDebug>
 
 MagneticMeasurementModel::MagneticMeasurementModel(DataStorage* storage, QObject* parent)
     : QAbstractTableModel(parent)
@@ -144,6 +145,7 @@ bool MagneticMeasurementModel::setData(const QModelIndex& index, const QVariant&
 
     if (success) {
         emit measurementUpdated(index.row(), oldMeasurement, measurement);
+        emit dataChanged(index, index);
         return true;
     }
 
@@ -165,11 +167,18 @@ Qt::ItemFlags MagneticMeasurementModel::flags(const QModelIndex& index) const
 
 bool MagneticMeasurementModel::addMeasurement(const MagneticMeasurement& measurement)
 {
-    beginInsertRows(QModelIndex(), rowCount(), rowCount());
+    const int oldSize = rowCount();
+    beginInsertRows(QModelIndex(), oldSize, oldSize);
     storage_->blockSignals(true);
     storage_->addMagnetic(measurement);
     storage_->blockSignals(false);
     endInsertRows();
+
+    if (rowCount() != oldSize + 1) {
+        qWarning() << "MagneticMeasurementModel::addMeasurement - insert failed: size mismatch";
+        return false;
+    }
+
     return true;
 }
 
@@ -183,6 +192,10 @@ bool MagneticMeasurementModel::removeMeasurement(int row)
     bool success = storage_->removeMagnetic(row);
     storage_->blockSignals(false);
     endRemoveRows();
+
+    if (!success) {
+        qWarning() << "MagneticMeasurementModel::removeMeasurement - storage failed to remove row" << row;
+    }
 
     return success;
 }

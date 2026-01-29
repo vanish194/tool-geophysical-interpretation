@@ -1,5 +1,6 @@
 #include "core/models/referenceReliefModel.h"
 #include <QColor>
+#include <QDebug>
 
 ReferenceReliefModel::ReferenceReliefModel(DataStorage* storage, QObject* parent)
     : QAbstractTableModel(parent)
@@ -130,6 +131,7 @@ bool ReferenceReliefModel::setData(const QModelIndex& index, const QVariant& val
 
     if (success) {
         emit measurementUpdated(index.row(), oldPoint, point);
+        emit dataChanged(index, index);
         return true;
     }
 
@@ -151,11 +153,18 @@ Qt::ItemFlags ReferenceReliefModel::flags(const QModelIndex& index) const
 
 bool ReferenceReliefModel::addPoint(const ReferenceReliefPoint& point)
 {
-    beginInsertRows(QModelIndex(), rowCount(), rowCount());
+    const int oldSize = rowCount();
+    beginInsertRows(QModelIndex(), oldSize, oldSize);
     storage_->blockSignals(true);
     storage_->addRelief(point);
     storage_->blockSignals(false);
     endInsertRows();
+
+    if (rowCount() != oldSize + 1) {
+        qWarning() << "ReferenceReliefModel::addPoint - insert failed: size mismatch";
+        return false;
+    }
+
     return true;
 }
 
@@ -169,6 +178,10 @@ bool ReferenceReliefModel::removePoint(int row)
     bool success = storage_->removeRelief(row);
     storage_->blockSignals(false);
     endRemoveRows();
+
+    if (!success) {
+        qWarning() << "ReferenceReliefModel::removePoint - storage failed to remove row" << row;
+    }
 
     return success;
 }

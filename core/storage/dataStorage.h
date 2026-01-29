@@ -17,6 +17,7 @@ public:
 
     // ---- GPS ------------------------------------------------------
     void addGPS(GPSMeasurement m);
+    void addGPSBatch(const std::vector<GPSMeasurement>& items);
     bool removeGPS(int index);
     bool updateGPS(int index, const GPSMeasurement& m);
     void clearGPS();
@@ -25,6 +26,7 @@ public:
 
     // ---- Magnetic -------------------------------------------------
     void addMagnetic(MagneticMeasurement m);
+    void addMagneticBatch(const std::vector<MagneticMeasurement>& items);
     bool removeMagnetic(int index);
     bool updateMagnetic(int index, const MagneticMeasurement& m);
     void clearMagnetic();
@@ -33,6 +35,7 @@ public:
 
     // ---- Relief ---------------------------------------------------
     void addRelief(ReferenceReliefPoint p);
+    void addReliefBatch(const std::vector<ReferenceReliefPoint>& items);
     bool removeRelief(int index);
     bool updateRelief(int index, const ReferenceReliefPoint& p);
     void clearRelief();

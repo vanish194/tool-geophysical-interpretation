@@ -1,5 +1,6 @@
 #include "core/models/GPSMeasurementModel.h"
 #include <QColor>
+#include <QDebug>
 
 GPSMeasurementModel::GPSMeasurementModel(DataStorage* storage, QObject* parent)
     : QAbstractTableModel(parent)
@@ -172,6 +173,7 @@ bool GPSMeasurementModel::setData(const QModelIndex& index, const QVariant& valu
 
     if (success) {
         emit measurementUpdated(index.row(), oldMeasurement, measurement);
+        emit dataChanged(index, index);
         return true;
     }
 
@@ -193,11 +195,18 @@ Qt::ItemFlags GPSMeasurementModel::flags(const QModelIndex& index) const
 
 bool GPSMeasurementModel::addMeasurement(const GPSMeasurement& measurement)
 {
-    beginInsertRows(QModelIndex(), rowCount(), rowCount());
+    const int oldSize = rowCount();
+    beginInsertRows(QModelIndex(), oldSize, oldSize);
     storage_->blockSignals(true);
     storage_->addGPS(measurement);
     storage_->blockSignals(false);
     endInsertRows();
+
+    if (rowCount() != oldSize + 1) {
+        qWarning() << "GPSMeasurementModel::addMeasurement - insert failed: size mismatch";
+        return false;
+    }
+
     return true;
 }
 
@@ -211,6 +220,10 @@ bool GPSMeasurementModel::removeMeasurement(int row)
     bool success = storage_->removeGPS(row);
     storage_->blockSignals(false);
     endRemoveRows();
+
+    if (!success) {
+        qWarning() << "GPSMeasurementModel::removeMeasurement - storage failed to remove row" << row;
+    }
 
     return success;
 }

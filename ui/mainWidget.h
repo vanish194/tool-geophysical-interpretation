@@ -13,7 +13,15 @@
 #include "core/models/magneticMeasurementModel.h"
 #include "core/models/referenceReliefModel.h"
 #include "core/storage/dataStorage.h"
-#include "core/commands.h"
+
+#include "core/utils/commands.h"
+
+#include "core/spatial/GPSSpatialDataAdapter.h"
+#include "core/spatial/magneticSpatialDataAdapter.h"
+
+#include "ui/views/mapViews/GPSHeatMapWidget.h"
+#include "ui/views/mapViews/magneticHeatMapWidget.h"
+
 
 class MainWidget : public QWidget
 {
@@ -35,6 +43,8 @@ private slots:
     void onReliefDataChanged(int row, const ReferenceReliefPoint& oldPoint, const ReferenceReliefPoint& newPoint);
 
 private:
+
+
     DataStorage* storage_;
     QUndoStack* undoStack_;
 
@@ -46,5 +56,15 @@ private:
     QTableView* magneticTableView_;
     QTableView* reliefTableView_;
 
+    GPSHeatMapWidget* gpsHeatMap_;
+    MagneticHeatMapWidget* magneticHeatMap_;
+
+    GPSSpatialDataAdapter* gpsSpatialAdapter_;
+    MagneticSpatialDataAdapter* magneticSpatialAdapter_;
+
     void setupUI();
+    void addTestData();
+    void blockAllModelsSignals();
+    void unlockAllModelsSignals();
+
 };

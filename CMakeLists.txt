@@ -13,8 +13,8 @@ qt_add_executable(GeoMagnSurvey
     main.cpp
 
     # ---- Commands ----
-    core/commands.h
-    core/commands.cpp
+    core/utils/commands.h
+    core/utils/commands.cpp
 
     # ---- UI ----
     ui/mainWidget.h
@@ -43,6 +43,11 @@ qt_add_executable(GeoMagnSurvey
     core/spatial/spatialPoint.h
     core/spatial/magneticSpatialDataAdapter.h core/spatial/magneticSpatialDataAdapter.cpp
     core/spatial/GPSSpatialDataAdapter.h core/spatial/GPSSpatialDataAdapter.cpp
+    ui/views/mapViews/abstractHeatMapWidget.h
+    ui/views/mapViews/abstractHeatMapWidget.cpp
+    ui/views/mapViews/GPSHeatMapWidget.h ui/views/mapViews/GPSHeatMapWidget.cpp
+    ui/views/mapViews/magneticHeatMapWidget.h ui/views/mapViews/magneticHeatMapWidget.cpp
+
 )
 
 qt_add_translations(

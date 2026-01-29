@@ -15,6 +15,19 @@ void DataStorage::addGPS(GPSMeasurement m)
     emit gpsChanged();
 }
 
+void DataStorage::addGPSBatch(const std::vector<GPSMeasurement>& items)
+{
+    if (items.empty())
+        return;
+
+    gps_.reserve(gps_.size() + items.size());
+    for (const auto& it : items) {
+        gps_.push_back(it);
+    }
+    qDebug() << "DataStorage::addGPSBatch - added" << items.size() << "items";
+    emit gpsChanged();
+}
+
 bool DataStorage::removeGPS(int index)
 {
     if (index < 0 || index >= static_cast<int>(gps_.size()))
@@ -64,6 +77,19 @@ void DataStorage::addMagnetic(MagneticMeasurement m)
     emit magneticChanged();
 }
 
+void DataStorage::addMagneticBatch(const std::vector<MagneticMeasurement>& items)
+{
+    if (items.empty())
+        return;
+
+    magnetic_.reserve(magnetic_.size() + items.size());
+    for (const auto& it : items) {
+        magnetic_.push_back(it);
+    }
+    qDebug() << "DataStorage::addMagneticBatch - added" << items.size() << "items";
+    emit magneticChanged();
+}
+
 bool DataStorage::removeMagnetic(int index)
 {
     if (index < 0 || index >= static_cast<int>(magnetic_.size()))
@@ -110,6 +136,19 @@ void DataStorage::addRelief(ReferenceReliefPoint p)
 {
     relief_.push_back(std::move(p));
     qDebug() << "DataStorage::addRelief";
+    emit reliefChanged();
+}
+
+void DataStorage::addReliefBatch(const std::vector<ReferenceReliefPoint>& items)
+{
+    if (items.empty())
+        return;
+
+    relief_.reserve(relief_.size() + items.size());
+    for (const auto& it : items) {
+        relief_.push_back(it);
+    }
+    qDebug() << "DataStorage::addReliefBatch - added" << items.size() << "items";
     emit reliefChanged();
 }
 
