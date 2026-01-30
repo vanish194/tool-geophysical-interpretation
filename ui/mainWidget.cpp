@@ -3,6 +3,8 @@
 
 #include <QtMath>//for addTestData()
 #include <vector>
+#include "ui/views/mapViews/GPSHeatMapWidget.h"
+#include "ui/views/mapViews/magneticHeatMapWidget.h"
 
 
 MainWidget::MainWidget(QWidget* parent)
@@ -13,17 +15,7 @@ MainWidget::MainWidget(QWidget* parent)
     , magneticModel_(new MagneticMeasurementModel(storage_, this))
     , reliefModel_(new ReferenceReliefModel(storage_, this))
 {
-    gpsSpatialAdapter_ =
-        new GPSSpatialDataAdapter(gpsModel_, this);
-
-    magneticSpatialAdapter_ =
-        new MagneticSpatialDataAdapter(magneticModel_, this);
-
-    gpsHeatMap_ =
-        new GPSHeatMapWidget(gpsSpatialAdapter_, this);
-
-    magneticHeatMap_ =
-        new MagneticHeatMapWidget(magneticSpatialAdapter_, this);
+    // Map adapters and widgets are created on demand in separate windows
 
     connect(gpsModel_, &GPSMeasurementModel::measurementUpdated, this, &MainWidget::onGPSDataChanged);
     connect(magneticModel_, &MagneticMeasurementModel::measurementUpdated, this, &MainWidget::onMagneticDataChanged);
@@ -82,11 +74,12 @@ void MainWidget::setupUI()
     gpsLeftLayout->addWidget(gpsTableView_);
     gpsLeftLayout->addLayout(gpsButtonLayout);
 
-    // --- правая часть: карта ---
-    gpsHeatMap_->setMinimumWidth(300);
+    // --- правая часть: кнопка для открытия карты ---
+    QPushButton* showGPSMapButton = new QPushButton(tr("Show Map"), this);
+    connect(showGPSMapButton, &QPushButton::clicked, this, &MainWidget::showGPSMap);
 
     gpsGroupLayout->addLayout(gpsLeftLayout, 2);
-    gpsGroupLayout->addWidget(gpsHeatMap_, 1);
+    gpsGroupLayout->addWidget(showGPSMapButton, 1);
 
 
     // Magnetic Table
@@ -115,10 +108,11 @@ void MainWidget::setupUI()
     magneticLeftLayout->addWidget(magneticTableView_);
     magneticLeftLayout->addLayout(magneticButtonLayout);
 
-    magneticHeatMap_->setMinimumWidth(300);
+    QPushButton* showMagneticMapButton = new QPushButton(tr("Show Map"), this);
+    connect(showMagneticMapButton, &QPushButton::clicked, this, &MainWidget::showMagneticMap);
 
     magneticGroupLayout->addLayout(magneticLeftLayout, 2);
-    magneticGroupLayout->addWidget(magneticHeatMap_, 1);
+    magneticGroupLayout->addWidget(showMagneticMapButton, 1);
 
 
     // Relief Table
@@ -350,4 +344,35 @@ void MainWidget::onMagneticDataChanged(int row, const MagneticMeasurement& oldMe
 void MainWidget::onReliefDataChanged(int row, const ReferenceReliefPoint& oldPoint, const ReferenceReliefPoint& newPoint)
 {
     undoStack_->push(new UpdateReliefCommand(storage_, row, oldPoint, newPoint));
+}
+
+
+void MainWidget::showGPSMap()
+{
+    QDialog* win = new QDialog(nullptr);
+    win->setAttribute(Qt::WA_DeleteOnClose);
+    win->setWindowTitle(tr("GPS Heat Map"));
+    QVBoxLayout* l = new QVBoxLayout(win);
+    GPSSpatialDataAdapter* adapter = new GPSSpatialDataAdapter(gpsModel_, win);
+    GPSHeatMapWidget* w = new GPSHeatMapWidget(adapter, win);
+    l->addWidget(w);
+    win->setModal(true);
+    win->resize(800, 600);
+    win->show();
+
+}
+
+void MainWidget::showMagneticMap()
+{
+    QDialog* win = new QDialog(nullptr);
+    win->setAttribute(Qt::WA_DeleteOnClose);
+    win->setWindowTitle(tr("Magnetic Heat Map"));
+    QVBoxLayout* l = new QVBoxLayout(win);
+    MagneticSpatialDataAdapter* adapter = new MagneticSpatialDataAdapter(magneticModel_, win);
+    MagneticHeatMapWidget* w = new MagneticHeatMapWidget(adapter, win);
+    l->addWidget(w);
+    win->setModal(true);
+    win->resize(800, 600);
+    win->show();
+
 }

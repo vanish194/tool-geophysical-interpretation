@@ -19,9 +19,6 @@
 #include "core/spatial/GPSSpatialDataAdapter.h"
 #include "core/spatial/magneticSpatialDataAdapter.h"
 
-#include "ui/views/mapViews/GPSHeatMapWidget.h"
-#include "ui/views/mapViews/magneticHeatMapWidget.h"
-
 
 class MainWidget : public QWidget
 {
@@ -56,15 +53,13 @@ private:
     QTableView* magneticTableView_;
     QTableView* reliefTableView_;
 
-    GPSHeatMapWidget* gpsHeatMap_;
-    MagneticHeatMapWidget* magneticHeatMap_;
-
-    GPSSpatialDataAdapter* gpsSpatialAdapter_;
-    MagneticSpatialDataAdapter* magneticSpatialAdapter_;
+    // Map widgets/adapters are created lazily when user requests a map window
 
     void setupUI();
     void addTestData();
     void blockAllModelsSignals();
     void unlockAllModelsSignals();
+    void showGPSMap();
+    void showMagneticMap();
 
 };
